@@ -1,26 +1,34 @@
-def convert_currency(amount, from_currency, to_currency):
-    exchange_rates = {
-        'USD': {'EUR': 0.92, 'CAD': 1.35, 'MXN': 16.88},
-        'EUR': {'USD': 1.09, 'CAD': 1.47, 'MXN': 18.40},
-        'CAD': {'USD': 0.74, 'EUR': 0.68, 'MXN': 12.49},
-        'MXN': {'USD': 0.059, 'EUR': 0.054, 'CAD': 0.080}
-    }
+import requests as rq
 
-    if from_currency in exchange_rates and to_currency in exchange_rates[from_currency]:
-        exchange_rates = exchange_rates[from_currency][to_currency]
-        converted_amount = amount * exchange_rates
+def get_exchange_rates(api_key, base_currency, target_currency):
+    url = f"https://open.er-api.com/v6/latetst/{base_currency}"
+    headers = {"Authorization": f"Token {api_key}"}
+    response = rq.get(url, headers=headers)
+    data = response.json()
+
+    if rq.status_codes == 200:
+        return data['rates'].get(target_currency)
+    else:
+        print("Failed to fetch exchange rate:", data.get('error'))
+        return None
+
+def convert_currency(amount, from_currency, to_currency, exchange_rate):
+    if exchange_rate is not None:
+        converted_amount = amount * exchange_rate
         return converted_amount
     else:
         return None
 
 def main():
+    api_key = '41019c2df0a8434c83f6c1c505d76c21'
     amount = float(input("Enter the amount:"))
     from_currency = input("Enter the currency to convert from: ").upper()
     to_currency = input("Enter the currency to convert to: ").upper()
 
-    converted_amount = convert_currency(amount, from_currency, to_currency)
-    if converted_amount is not None:
-        print(f"{amount} {from_currency} equals {converted_amount:.2f} {to_currency}")
+    exchange_rate = get_exchange_rates(api_key, from_currency, to_currency)
+    if exchange_rate is not None:
+        converted_amount = convert_currency(amount, from_currency, to_currency, exchange_rate)
+        print(f"{amount} {from_currency} equals {convert_currency:.2f} {to_currency}")
     else:
         print("Invalid currency pair or currency not supported.")
     
