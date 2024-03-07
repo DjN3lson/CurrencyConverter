@@ -1,16 +1,24 @@
 import requests as rq
 
 def get_exchange_rates(api_key, base_currency, target_currency):
-    url = f"https://open.er-api.com/v6/latetst/{base_currency}"
+    url = f"https://open.er-api.com/v6/latest/{base_currency}"
     headers = {"Authorization": f"Token {api_key}"}
-    response = rq.get(url, headers=headers)
-    data = response.json()
-
-    if rq.status_codes == 200:
-        return data['rates'].get(target_currency)
-    else:
-        print("Failed to fetch exchange rate:", data.get('error'))
-        return None
+    
+    try:
+        response = rq.get(url, headers=headers)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()  # Parse JSON response
+        
+        # Extract exchange rate for target currency
+        exchange_rate = data['rates'].get(target_currency)
+        return exchange_rate
+    
+    except rq.exceptions.HTTPError as e:
+        print(f"HTTP error occurred: {e}")
+    except rq.exceptions.JSONDecodeError as e:
+        print(f"JSON decoding error occurred: {e}")
+    
+    return None
 
 def convert_currency(amount, from_currency, to_currency, exchange_rate):
     if exchange_rate is not None:
@@ -28,7 +36,7 @@ def main():
     exchange_rate = get_exchange_rates(api_key, from_currency, to_currency)
     if exchange_rate is not None:
         converted_amount = convert_currency(amount, from_currency, to_currency, exchange_rate)
-        print(f"{amount} {from_currency} equals {convert_currency:.2f} {to_currency}")
+        print(f"{amount} {from_currency} equals {converted_amount:.2f} {to_currency}")
     else:
         print("Invalid currency pair or currency not supported.")
     
